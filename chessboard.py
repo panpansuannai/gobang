@@ -2,6 +2,10 @@ from chessman import ChessMan
 
 """ 1-index chess board """
 class ChessBoard(object):
+    class FullException(Exception):
+        def __init__(self):
+            pass
+
     def __init__(self, cols: int, rows: int):
         self.cols = cols
         self.rows = rows
@@ -64,3 +68,11 @@ class ChessBoard(object):
                                 >= n + 1 ):
             return True
         return False
+
+    ''' Check whether the board is full '''
+    def check_full(self) -> bool:
+        for i in self.board:
+            for j in i:
+                if j == None:
+                    return False
+        return True

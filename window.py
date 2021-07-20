@@ -76,7 +76,10 @@ class ChessBoardWindow(object):
             self.draw_board()
             self.window.refresh()
             self.move('')
-            return self.board.check_n_chessman(*self.winaddr2index(self.y, self.x), self.num)
+            if self.board.check_n_chessman(*self.winaddr2index(self.y, self.x), self.num):
+                return True
+            elif self.board.check_full():
+                raise ChessBoard.FullException
         else:
             raise ValueError
 

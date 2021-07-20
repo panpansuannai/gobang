@@ -13,7 +13,7 @@ if __name__ == '__main__':
     curses.noecho()
 
     ''' Select num '''
-    rows = 15
+    rows = 3
     scr.addstr(2, 2, "1 - 10 x 10")
     scr.addstr(5, 2, "2 - 15 x 15(默认)")
     scr.addstr(8, 2, "3 - 20 x 20")
@@ -80,7 +80,16 @@ if __name__ == '__main__':
             try:
                 finish = chesswin.add_chessman(colors[color_num]["color"])
             except ValueError:
+                chesswin.move('')
                 continue
+            except ChessBoard.FullException:
+                scorewin.add_msg("游戏结束, 棋盘已满")
+                scorewin.add_msg("按任意键退出...", curses.A_BLINK)
+                scorewin.refresh()
+                key = chesswin.get_key()
+                curses.endwin()
+                sys.exit(0)
+
             color_num = (color_num + 1) % 2
             scorewin.change_player(colors[color_num]["name"]
                     + " " + colors[color_num]["color"].get_color())
