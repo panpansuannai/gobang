@@ -13,25 +13,25 @@ if __name__ == '__main__':
     curses.noecho()
 
     ''' Select num '''
-    num = 15
+    rows = 15
     scr.addstr(2, 2, "1 - 10 x 10")
     scr.addstr(5, 2, "2 - 15 x 15(默认)")
     scr.addstr(8, 2, "3 - 20 x 20")
     scr.addstr(11, 2, "请选择棋盘规格: ")
     key = scr.getkey()
     if key == '1':
-        num = 10
+        rows = 10
     elif key == '2':
-        num = 15
+        rows = 15
     elif key == '3':
-        num = 20
+        rows = 20
 
     max_y, max_x = scr.getmaxyx()
     chessboard = scr.derwin(max_y - 2, max_x // 2, 1, 1)
     chessboard.keypad(True)
     chessboard.clear()
     chessboard.border()
-    chesswin = ChessBoardWindow(chessboard, num)
+    chesswin = ChessBoardWindow(chessboard, rows, 5)
 
     scoreboard = scr.derwin(max_y - 2, max_x // 2 - 3, 1, 2 + max_x // 2)
     scoreboard.keypad(True)

@@ -5,9 +5,10 @@ import curses
 ''' Represent a window that contains a chessboard
 '''
 class ChessBoardWindow(object):
-    def __init__(self, window, num: int):
+    def __init__(self, window, rows: int, num: int):
         self.window = window
-        self.board = ChessBoard(num, num)
+        self.board = ChessBoard(rows, rows)
+        self.rows = rows
         self.num = num
         self.null_char = '_'
 
@@ -17,11 +18,11 @@ class ChessBoardWindow(object):
     def move(self, direction: str):
         if direction == 'KEY_UP' and self.y > self.start_y:
             self.y, self.x = self.y - self.row_step, self.x
-        elif direction == 'KEY_DOWN' and self.y < self.start_y + (self.num - 1)*self.row_step:
+        elif direction == 'KEY_DOWN' and self.y < self.start_y + (self.rows - 1)*self.row_step:
             self.y, self.x = self.y + self.row_step, self.x
         elif direction == 'KEY_LEFT' and self.x > self.start_x:
             self.y, self.x = self.y, self.x - self.col_step
-        elif direction == 'KEY_RIGHT' and self.x < self.start_x + (self.num - 1) * self.col_step:
+        elif direction == 'KEY_RIGHT' and self.x < self.start_x + (self.rows - 1) * self.col_step:
             self.y, self.x = self.y, self.x + self.col_step
         self.draw_board()
         if self.board.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
@@ -32,11 +33,11 @@ class ChessBoardWindow(object):
     def draw_board(self):
         chess_max_y, chess_max_x = self.window.getmaxyx()
 
-        self.col_step = chess_max_x // (self.num + 1)
-        self.row_step = chess_max_y // (self.num + 1)
+        self.col_step = chess_max_x // (self.rows + 1)
+        self.row_step = chess_max_y // (self.rows + 1)
 
-        for j in range(1, self.num + 1):
-            for i in range(1, self.num + 1):
+        for j in range(1, self.rows + 1):
+            for i in range(1, self.rows + 1):
                 if self.board.get_chessman(i, j) == None:
                     self.window.addch(*(self.index2windaddr(i, j)), self.null_char)
                 else:
@@ -75,7 +76,7 @@ class ChessBoardWindow(object):
             self.draw_board()
             self.window.refresh()
             self.move('')
-            return self.board.check_n_chessman(*self.winaddr2index(self.y, self.x), 5)
+            return self.board.check_n_chessman(*self.winaddr2index(self.y, self.x), self.num)
         else:
             raise ValueError
 
