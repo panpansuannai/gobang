@@ -1,10 +1,10 @@
 ''' The color of the chess man '''
 class ChessColor(object):
     def __init__(self, c: str = '#'):
-        self.color = c
+        self.c = c
 
-    def get_color(self) -> str:
-        return self.color
+    def color(self) -> str:
+        return self.c
 
 ''' Represent a chessman '''
 class ChessMan(object):
@@ -13,3 +13,6 @@ class ChessMan(object):
 
     def get_color(self) -> ChessColor:
         return self.color
+    
+    def __str__(self):
+        return self.color.color()

@@ -24,6 +24,10 @@ class ChessBoard(object):
             return self.board[y-1][x-1]
         return None
 
+    def remove_chessman(self, x: int, y: int):
+        if 1 <= x <= self.cols and 1 <= y <= self.rows:
+            self.board[y-1][x-1] = None
+
     ''' Check how many chessmans are in the same color
         in the direction 
     '''
@@ -41,6 +45,11 @@ class ChessBoard(object):
             cur_n += 1
             xp, yp = dir(xp, yp)
         return cur_n
+
+    def get_corner(self, x: int, y: int, dir) -> (int, int):
+        while 1 <= x <= self.cols and 1 <= y <= self.rows:
+            x, y = dir(x, y)
+        return (x, y)
 
     ''' Check the position (x, y) whether are in the line 
         that contians n chessman with the same color
@@ -76,3 +85,21 @@ class ChessBoard(object):
                 if j == None:
                     return False
         return True
+    
+    def get_rows(self):
+        return self.rows
+
+    def get_cols(self):
+        return self.cols
+
+    def __str__(self):
+        s = ''
+        for i in self.board:
+            for j in i:
+                if j != None:
+                    s += j.get_color().color() + ' '
+                else:
+                    s += '- '
+            s += '\n'
+        return s
+

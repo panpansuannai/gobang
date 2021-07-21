@@ -11,6 +11,7 @@ class ChessBoardWindow(object):
         self.rows = rows
         self.num = num
         self.null_char = '_'
+        self.cur_color = ChessColor(' ')
 
     ''' Move the cursor to the direction
         @param direction must be 'KEY_UP' or 'KEY_DOWN' or 'KEY_LEFT' or 'KEY_RIGHT'
@@ -26,7 +27,11 @@ class ChessBoardWindow(object):
             self.y, self.x = self.y, self.x + self.col_step
         self.draw_board()
         if self.board.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
-            self.window.addch(self.y, self.x, self.cur_color.get_color(), curses.A_BLINK)
+            self.window.addch(self.y, self.x, self.cur_color.color(), curses.A_BLINK)
+        self.window.move(self.y, self.x)
+
+    def set_cur(self, x: int, y: int):
+        self.y, self.x = self.index2windaddr(x, y)
         self.window.move(self.y, self.x)
 
     ''' Draw the chessboard to the console '''
@@ -43,7 +48,7 @@ class ChessBoardWindow(object):
                 else:
                     color = self.board.get_chessman(i, j).get_color()
                     self.window.addch(*(self.index2windaddr(i, j)),
-                                        color.get_color())
+                                        color.color())
 
     ''' Reset the cursor to the begining '''
     def reset_cur(self):
@@ -110,7 +115,7 @@ class ScoreWindow(object):
         last_msg = self.last_msg
         y, x = last_msg
         self.last_msg = (y + 2, x)
-        self.window.addstr(*self.last_msg, msg, attr)
+        self.window.addstr(y+2, x, msg, attr)
 
     ''' Refresh the window '''
     def refresh(self):
