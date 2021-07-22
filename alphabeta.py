@@ -171,7 +171,7 @@ class AlphaBeta(object):
            or s.find('##*##') != -1
            or s.find('###*#') != -1
            or s.find('####*') != -1):
-            scores += 10000000
+            scores += 90000000
 
         elif (s.find('*@@@@') != -1
             or s.find('@*@@@') != -1

@@ -19,19 +19,22 @@ def shortcuts(key: str) -> str:
     return key
 
 def menu_select(scr, promt: str, strs:list, options: list, default):
+    curses.curs_set(0)
     start_x, start_y = 2, 2
     step_y = 3
+    x_tab = 3
     now_select = 0
     while True:
         scr.refresh()
         x, y = start_x, start_y
+        scr.addstr(y, x, promt + "(<方向键>选择)", curses.A_ITALIC|curses.A_BOLD|curses.A_HORIZONTAL)
+        x += x_tab
         for i in range(len(options)):
-            if i == now_select:
-                scr.addstr(y, x, str(i + 1) + ' - ' + strs[i], curses.A_STANDOUT)
-            else:
-                scr.addstr(y, x, str(i + 1) + ' - ' + strs[i])
             y += step_y
-        scr.addstr(y, x, promt + ": ")
+            if i == now_select:
+                scr.addstr(y, x, strs[i], curses.A_STANDOUT)
+            else:
+                scr.addstr(y, x, strs[i])
         try:
             key = scr.getkey()
 
@@ -100,7 +103,7 @@ def computer_round(chesswin, scorewin, player: dict, human_color: ChessColor):
     scorewin.change_player(player['name'])
     scorewin.refresh()
     alphabeta = AlphaBeta(chesswin.board, chesswin.num)
-    t, x, y = alphabeta.get_best_pos(True, player['color'], human_color, 0)
+    _, x, y = alphabeta.get_best_pos(True, player['color'], human_color, 0)
     #scorewin.add_msg(str(t) + ", " + str(x) + ", " + str(y))
     chesswin.set_cur(x, y)
     try:
@@ -115,15 +118,16 @@ if __name__ == '__main__':
 
     curses.noecho()
 
-    ''' Select num '''
+    ''' Options '''
     rows = menu_select(scr, "请选择棋盘规格",
-                        ["10 x 10(默认)", "12 x 12",
+                        ["10 x 10", "12 x 12",
                         "15 x 15"], [10, 12, 15], 10)
 
     player_first = menu_select(scr, "请选择先手方",
-                      ["玩家(默认)", "电脑"], [True, False], True)
+                      ["玩家", "电脑"], [True, False], True)
 
     num = 5
+
     max_y, max_x = scr.getmaxyx()
     chessboard = scr.derwin(max_y - 2, max_x // 2, 1, 1)
     chessboard.keypad(True)
@@ -131,7 +135,7 @@ if __name__ == '__main__':
     chessboard.border()
     chesswin = ChessBoardWindow(chessboard, rows, num)
 
-    scoreboard = scr.derwin(max_y - 2, max_x // 2 - 3, 1, 2 + max_x // 2)
+    scoreboard = scr.derwin(max_y - 2, max_x // 2 - 1, 1, 1 + max_x // 2)
     scoreboard.keypad(True)
     scoreboard.border()
     scorewin = ScoreWindow(scoreboard)
@@ -139,11 +143,14 @@ if __name__ == '__main__':
     players = {"player" : {"name": "玩家", "color": ChessColor('#')},
               "computer": {"name": "电脑", "color": ChessColor('@')}}
 
-    scorewin.add_msg("使用方向键移动, 使用Enter下棋, ctrl-c 退出")
+    scorewin.add_msg("使用方向键移动<Up, Down, Left, Right>", curses.A_ITALIC)
+    scorewin.add_msg("使用<Enter>下棋", curses.A_ITALIC)
+    scorewin.add_msg("<ctrl-c> 退出", curses.A_ITALIC)
 
-    ''' Draw window'''
+    ''' Draw chessboard'''
     chesswin.draw_board()
     chesswin.reset_cur()
+    curses.curs_set(1)
 
     while True:
         scorewin.refresh()
@@ -151,11 +158,11 @@ if __name__ == '__main__':
 
         try:
             if player_first and player_round(chesswin, scorewin, players['player']):
-                scorewin.add_msg("游戏结束，"
+                scorewin.add_msg("游戏结束,"
                                  + players['player']["name"] + "胜")
                 exit(chesswin, scorewin)
             if computer_round(chesswin, scorewin, players['computer'], players['player']['color']):
-                scorewin.add_msg("游戏结束，"
+                scorewin.add_msg("游戏结束,"
                                  + players['computer']["name"] + "胜")
                 exit(chesswin, scorewin)
 

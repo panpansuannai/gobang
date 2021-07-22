@@ -1,7 +1,7 @@
 import unittest
 from chessboard import *
 from chessman import *
-from alphabeta import *
+from alphabeta import AlphaBeta
 
 class AlphaBetaTest(unittest.TestCase):
 
