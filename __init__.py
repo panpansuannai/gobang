@@ -96,6 +96,7 @@ def exit(chesswin, scorewin):
 
 def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool:
     chesswin.set_current_color(player['color'])
+    chesswin.move('')
     scorewin.change_player(player['name'])
     scorewin.refresh()
     while True:
@@ -103,7 +104,7 @@ def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool
             key = chesswin.get_key()
         except KeyboardInterrupt:
             curses.endwin()
-            sys.exit(0)
+            exit(chesswin, scorewin)
 
         key = shortcuts(key)
         if (key == 'KEY_LEFT' 
@@ -177,8 +178,8 @@ if __name__ == '__main__':
     scoreboard.border()
     scorewin = ScoreWindow(scoreboard)
 
-    players = {"player" : {"name": "玩家", "color": ChessColor('#')},
-              "computer": {"name": "电脑", "color": ChessColor('@')}}
+    players = {"player" : {"name": "玩家", "color": ChessColor('○')},
+              "computer": {"name": "电脑", "color": ChessColor('●')}}
 
     scorewin.add_msg("<Up, Down, Left, Right>: 移动", curses.A_ITALIC)
     scorewin.add_msg("<Enter>: 落子", curses.A_ITALIC)
@@ -188,7 +189,7 @@ if __name__ == '__main__':
     ''' Draw chessboard'''
     chesswin.draw_board()
     chesswin.reset_cur()
-    curses.curs_set(1)
+    curses.curs_set(0)
 
     while True:
         scorewin.refresh()

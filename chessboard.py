@@ -79,9 +79,9 @@ class ChessBoard(object):
 
     def get_continue(self, x: int, y: int, n: int) -> set:
         if not (1 <= x <= self.cols and 1 <= y <= self.rows):
-            return False
+            return set()
         if self.board[y - 1][x - 1] == None:
-            return False
+            return set()
         up = lambda x, y: (x, y - 1)
         down = lambda x, y: (x, y + 1)
         left = lambda x, y: (x - 1, y)

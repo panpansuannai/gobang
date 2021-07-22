@@ -10,7 +10,7 @@ class ChessBoardWindow(object):
         self.board = ChessBoard(rows, rows)
         self.rows = rows
         self.num = num
-        self.null_char = '_'
+        self.null_char = '⋅'
         self.cur_color = ChessColor(' ')
 
     ''' Move the cursor to the direction
@@ -27,7 +27,13 @@ class ChessBoardWindow(object):
             self.y, self.x = self.y, self.x + self.col_step
         self.draw_board()
         if self.board.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
-            self.__window.addch(self.y, self.x, self.cur_color.color(), curses.A_BLINK)
+            self.__window.addch(self.y, self.x,
+                        self.cur_color.color(), curses.A_BLINK|curses.A_BOLD)
+        else:
+            self.__window.addch(self.y, self.x,
+                self.board.get_chessman(
+                    *self.winaddr2index(self.y, self.x)).get_color().color(),
+                    curses.A_BOLD|curses.A_UNDERLINE)
         self.__window.move(self.y, self.x)
 
     def set_cur(self, x: int, y: int):
