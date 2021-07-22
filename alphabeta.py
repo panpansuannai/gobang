@@ -18,29 +18,34 @@ class AlphaBeta(object):
                 maxcolor: ChessColor, max_depth: int = 4,
                 a: int = NEG_INF, b: int = INF, depth: int = 0):
 
-        board = [[0 for i in range(self.board.cols)] for j in range(self.board.rows)]
+        board = [['-' for i in range(self.board.cols)] for j in range(self.board.rows)]
         for j in range(1, self.board.get_rows() + 1):
             for i in range(1, self.board.get_cols() + 1):
                 if self.board.get_chessman(i, j) == None:
+                    self.board.add_chessman(i, j,
+                                    ChessMan(minicolor if mini else maxcolor))
                     board[j-1][i-1] = self.cut_branch(i, j, 
-                                                      mini, minicolor,
+                                                      not mini, minicolor,
                                                       maxcolor, max_depth)
-        print(tabulate.tabulate(board))
+                    self.board.remove_chessman(i, j)
+                    assert self.board.get_chessman(i, j) == None
+
+        #print(tabulate.tabulate(board))
 
         if mini:
-            v = INF
-        else:
             v = NEG_INF
+        else:
+            v = INF
         x, y = 0, 0
         for j in range(1, self.board.get_rows() + 1):
             for i in range(1, self.board.get_cols() + 1):
                 if self.board.get_chessman(i, j) == None:
                     if mini:
-                        if board[j-1][i-1] < v:
+                        if board[j-1][i-1] > v:
                             v = board[j-1][i-1]
                             x, y = i, j
                     else:
-                        if board[j-1][i-1] > v:
+                        if board[j-1][i-1] < v:
                             v = board[j-1][i-1]
                             x, y = i, j
         return (v, x, y)
@@ -50,50 +55,66 @@ class AlphaBeta(object):
                 a:int = NEG_INF, b:int = INF, depth:int = 0):
 
         if depth >= max_depth:
-            print("x: {}, y:{}, {}".format(x, y, minicolor.color() if mini else maxcolor.color()))
-            print(self.board)
+            #print("x: {}, y:{}, {}".format(x, y, minicolor.color() if mini else maxcolor.color()))
             scores = self.calc_board_scores(x, y, mini, minicolor, maxcolor)
-            print("scores: {}".format(scores))
+            #print("scores: {}".format(scores))
             return scores 
 
         if mini:
             v = INF
-            self.board.add_chessman(x, y, ChessMan(minicolor))
             for j in range(1, self.board.get_rows() + 1):
                 for i in range(1, self.board.get_cols() + 1):
                     if self.board.get_chessman(i, j) == None:
+
+                        self.board.add_chessman(i, j, ChessMan(minicolor))
+                        if self.board.check_n_chessman(i, j, self.num):
+                            self.board.remove_chessman(i, j)
+                            return self.calc_board_scores(i, j,
+                                    mini, minicolor, maxcolor)
+                        if self.board.check_full():
+                            self.board.remove_chessman(i, j)
+                            return self.calc_board_scores(i, j,
+                                    mini, minicolor, maxcolor)
 
                         _t = self.cut_branch(i, j, False, 
                                             minicolor, maxcolor,max_depth, 
                                             a, b, depth + 1)
 
+                        self.board.remove_chessman(i, j)
                         v = min(v, _t)
                         b = min(b, v)
                         if b <= a:
                             break
-            if self.board.check_full():
-                return self.calc_board_scores(x, y, mini, minicolor, maxcolor)
-            self.board.remove_chessman(x, y)
-            return -v
+                        assert self.board.get_chessman(i, j) == None
+            return v
         else:
             v = NEG_INF
-            self.board.add_chessman(x, y, ChessMan(maxcolor))
             for j in range(1, self.board.get_rows() + 1):
                 for i in range(1, self.board.get_cols() + 1):
                     if self.board.get_chessman(i, j) == None:
+
+                        self.board.add_chessman(i, j, ChessMan(maxcolor))
+                        if self.board.check_n_chessman(i, j, self.num):
+                            self.board.remove_chessman(i, j)
+                            return self.calc_board_scores(i, j,
+                                    mini, minicolor, maxcolor)
+
+                        if self.board.check_full():
+                            self.board.remove_chessman(i, j)
+                            return self.calc_board_scores(i, j,
+                                    mini, minicolor, maxcolor)
 
                         _t = self.cut_branch(i, j, True, 
                                             minicolor, maxcolor,max_depth,
                                             a, b, depth + 1)
 
+                        self.board.remove_chessman(i, j)
                         v = max(v, _t)
                         a = max(a, v)
                         if b <= a:
                             break
-            if self.board.check_full():
-                return self.calc_board_scores(x, y, mini, minicolor, maxcolor)
-            self.board.remove_chessman(x, y)
-            return -v
+                        assert self.board.get_chessman(i, j) == None
+            return v
         
     def calc_board_scores(self, x: int, y: int, mini: bool,
                             minicolor: ChessColor,
@@ -107,7 +128,6 @@ class AlphaBeta(object):
         upper_right = lambda x, y: right(*up(x, y))
         lower_right = lambda x, y: right(*down(x, y))
         color = minicolor if mini else maxcolor
-        self.board.add_chessman(x, y, minicolor if mini else maxcolor)
         chessman = self.board.get_chessman(x, y)
 
         scores = 0
@@ -139,9 +159,8 @@ class AlphaBeta(object):
                     s += '@'
                 start_x, start_y = direction(start_x, start_y)
             s += '|'
-            print(s)
-            scores += self.__calc_scores(s)
-        self.board.remove_chessman(x, y)
+            #print(s)
+            scores += self.__calc_scores(s) + self.pos_weight[y-1][x-1]
         return -scores if mini else scores
 
     def __calc_scores(self, s: str) -> int:
@@ -154,13 +173,20 @@ class AlphaBeta(object):
            or s.find('####*') != -1):
             scores += 10000000
 
-        if (s.find('_*###_') != -1
+        elif (s.find('*@@@@') != -1
+            or s.find('@*@@@') != -1
+            or s.find('@@*@@') != -1
+            or s.find('@@@*@') != -1
+            or s.find('@@@@*') != -1):
+            scores += 6000000
+
+        elif (s.find('_*###_') != -1
             or s.find('_#*##_') != -1
             or s.find('_##*#_') != -1
-            or s.find('_###*_') != -1) :
-            scores += 400000
+            or s.find('_###*_') != -1):
+            scores += 5000000
 
-        if ( s.find('*_###') != -1
+        elif ( s.find('*_###') != -1
             or s.find('*#_##') != -1
             or s.find('*##_#') != -1
             or s.find('*###_') != -1
@@ -180,9 +206,20 @@ class AlphaBeta(object):
             or s.find('#_##*') != -1
             or s.find('##_#*') != -1
             or s.find('###_*') != -1):
-            scores += 2000
+            scores += 500000
 
-        if (s.find('*##__') != -1
+        elif (s.find('*@@@_') != -1
+            or s.find('_*@@@') != -1
+            or s.find('@*@@_') != -1
+            or s.find('_@*@@') != -1
+            or s.find('@@*@_') != -1
+            or s.find('_@@*@') != -1
+            or s.find('@@@*_') != -1
+            or s.find('_@@@*') != -1):
+            scores += 100000
+
+
+        elif (s.find('*##__') != -1
             or s.find('#*#__') != -1
             or s.find('##*__') != -1
             or s.find('_*##_') != -1
@@ -191,33 +228,44 @@ class AlphaBeta(object):
             or s.find('__*##') != -1
             or s.find('__#*#') != -1
             or s.find('__##*') != -1):
-            scores += 100
+            scores += 50000
 
-        if (s.find('*#___') != -1
+        elif (s.find('*@@_') != -1
+            or s.find('_*@@') != -1
+            or s.find('_@*@') != -1
+            or s.find('@*@_') != -1
+            or s.find('_@@*') != -1
+            or s.find('@@*_') != -1):
+            scores += 1000
+
+        elif (s.find('*#___') != -1
             or s.find('#*___') != -1
             or s.find('_*#__') != -1
             or s.find('_#*__') != -1
             or s.find('__*#_') != -1
             or s.find('__#*_') != -1
             or s.find('___*#') != -1
-            or s.find('___#*') != -1
-            or s.find('*_#__') != -1
+            or s.find('___#*') != -1):
+            scores += 500
+
+        elif (s.find('*_#__') != -1
             or s.find('#_*__') != -1
             or s.find('_*_#_') != -1
             or s.find('_#_*_') != -1
             or s.find('__*_#') != -1
             or s.find('__#_*') != -1):
-            scores += 10
+            scores += 100
 
-        if (s.find('*__#_') != -1
+        elif (s.find('*__#_') != -1
             or s.find('*__#_') != -1
             or s.find('_*__#') != -1
             or s.find('_#__*') != -1):
-            scores += 3
+            scores += 50
 
-
-        if (s.find('*@') != -1
-            or s.find('@*') != -1):
+        elif (s.find('*@_') != -1
+            or s.find('_*@') != -1
+            or s.find('_@*') != -1
+            or s.find('@*_') != -1):
             scores += 5
 
         return scores
@@ -231,9 +279,18 @@ class AlphaBeta(object):
             scores += 100000
         if (s.find('*#') != -1
             or s.find('#*') != -1):
-            scores += 50000
+            scores += 5000
         if (s.find('*_#') != -1
             or s.find('#_*') != -1):
-            scores += 30000
+            scores += 3000
+
+        if (s.find('*@') != -1
+                or s.find('@*') != -1):
+            scores += 500
+
+        if (s.find('*@@') != -1
+            or s.find('@*@') != -1
+            or s.find('@@*') != -1):
+            scores += 50000
         return scores
-    """
+        """

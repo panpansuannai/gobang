@@ -99,7 +99,7 @@ class ChessBoard(object):
                 if j != None:
                     s += j.get_color().color() + ' '
                 else:
-                    s += '- '
+                    s += '! '
             s += '\n'
         return s
 

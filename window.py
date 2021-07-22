@@ -119,5 +119,6 @@ class ScoreWindow(object):
 
     ''' Refresh the window '''
     def refresh(self):
-        self.window.addstr(*self.player_pos, "当前棋方: " + self.player)
+        self.window.addstr(*self.player_pos, "当前棋方: " 
+                            + self.player, curses.A_STANDOUT)
         self.window.refresh()
