@@ -33,6 +33,7 @@ class ChessBoardWindow(object):
     def set_cur(self, x: int, y: int):
         self.y, self.x = self.index2windaddr(x, y)
         self.__window.move(self.y, self.x)
+        self.move('')
 
     ''' Draw the chessboard to the console '''
     def draw_board(self):
@@ -96,15 +97,23 @@ class ChessBoardWindow(object):
     def get_key(self) -> str:
         return self.__window.getkey()
 
+    def set_board_blink(self, pos: set):
+        for x, y in pos:
+            self.__window.chgat(*self.index2windaddr(x, y), 1, curses.A_BLINK)
+        self.__window.refresh()
 
 ''' Represent a window containing some message '''
 class ScoreWindow(object):
+
+    init_msg_pos = (1,3)
+
     def __init__(self, window):
         self.__window = window
         self.player_pos = (1, 1)
-        self.last_msg = (1, 3)
+        self.last_msg = self.init_msg_pos
         self.player = ''
         self.message = ''
+        self.__window.scrollok(True)
 
     ''' Change the current player name '''
     def change_player(self, player: str):
@@ -112,10 +121,17 @@ class ScoreWindow(object):
 
     ''' Add a message to the window '''
     def add_msg(self, msg: str, attr=0):
-        last_msg = self.last_msg
-        y, x = last_msg
-        self.last_msg = (y + 2, x)
-        self.__window.addstr(y+2, x, msg, attr)
+        y, x = self.last_msg
+        my, _ = self.__window.getmaxyx()
+        if y + 2 >= my:
+            self.__window.clear()
+            self.__window.border()
+            self.__window.refresh()
+            self.last_msg = self.init_msg_pos
+            y, x = self.last_msg
+        y += 2
+        self.last_msg = (y, x)
+        self.__window.addstr(y, x, msg, attr)
 
     ''' Refresh the window '''
     def refresh(self):

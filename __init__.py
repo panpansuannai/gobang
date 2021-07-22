@@ -1,10 +1,31 @@
 import curses
 import sys
+import time
 import curses.textpad
 from chessboard import *
 from chessman import *
 from window import *
 from alphabeta import *
+
+def startup(scr):
+    curses.curs_set(0)
+    y, x = scr.getmaxyx()
+    scr.addstr((y-8)//2, (x-42)//2, r"__        __   _          ")
+    scr.addstr((y-8)//2+1, (x-42)//2, r"\ \      / /__| | ___ ___  _ __ ___   ___ ")
+    scr.addstr((y-8)//2+2, (x-42)//2, r" \ \ /\ / / _ \ |/ __/ _ \| '_ ` _ \ / _ \ ")
+    scr.addstr((y - 8) // 2 + 3, (x - 42) // 2, r"  \ V  V /  __/ | (_| (_) | | | | | |  __/")
+    scr.addstr((y - 8) // 2 + 4, (x - 42) // 2, r"   \_/\_/ \___|_|\___\___/|_| |_| |_|\___|")
+    scr.addstr((y-8) // 2+6, (x - 9) //2, "<<五子棋>>",
+                curses.A_STANDOUT|curses.A_ITALIC)
+    scr.addstr((y-8)//2 + 8, (x - 22) // 2, "press <Enter> to start", curses.A_BLINK)
+    scr.refresh()
+    while True:
+        try:
+            if scr.getkey() == '\n':
+                break
+        except:
+            curses.endwin()
+            sys.exit(0)
 
 def shortcuts(key: str) -> str:
     ''' short cut '''
@@ -19,6 +40,9 @@ def shortcuts(key: str) -> str:
     return key
 
 def menu_select(scr, promt: str, strs:list, options: list, default):
+    scr.clear()
+    scr.refresh()
+    scr.border()
     curses.curs_set(0)
     start_x, start_y = 2, 2
     step_y = 3
@@ -32,7 +56,7 @@ def menu_select(scr, promt: str, strs:list, options: list, default):
         for i in range(len(options)):
             y += step_y
             if i == now_select:
-                scr.addstr(y, x, strs[i], curses.A_STANDOUT)
+                scr.addstr(y, x, strs[i], curses.A_STANDOUT|curses.A_BOLD)
             else:
                 scr.addstr(y, x, strs[i])
         try:
@@ -45,14 +69,8 @@ def menu_select(scr, promt: str, strs:list, options: list, default):
                 now_select = min(len(options) - 1, now_select + 1)
                 continue
             elif key == '\n':
-                scr.clear()
-                scr.refresh()
-                scr.border()
                 return options[now_select]
             else:
-                scr.clear()
-                scr.refresh()
-                scr.border()
                 try:
                     key = int(key)
                 except:
@@ -65,16 +83,18 @@ def menu_select(scr, promt: str, strs:list, options: list, default):
             sys.exit(0)
 
 def exit(chesswin, scorewin):
-    scorewin.add_msg("按任意键退出...", curses.A_BLINK)
+    scorewin.add_msg("按<Enter>退出...", curses.A_BLINK)
     scorewin.refresh()
-    try:
-        _ = chesswin.get_key()
-    except:
-        pass
+    while True:
+        try:
+            if chesswin.get_key() == '\n':
+                break
+        except:
+            break
     curses.endwin()
     sys.exit(0)
 
-def player_round(chesswin, scorewin, player: dict) -> bool:
+def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool:
     chesswin.set_current_color(player['color'])
     scorewin.change_player(player['name'])
     scorewin.refresh()
@@ -93,21 +113,37 @@ def player_round(chesswin, scorewin, player: dict) -> bool:
             chesswin.move(key)
         elif key == '\n':
             try:
-                return chesswin.add_chessman(player['color'])
+                if chesswin.add_chessman(player['color']):
+                    chesswin.set_board_blink(chesswin.board.get_continue(
+                                                chesswin.x, chesswin.y, chesswin.num))
+                    return True
+                else:
+                    return False
             except ValueError:
                 chesswin.move('')
                 continue
+        elif key == 'a':
+            alphabeta = AlphaBeta(chesswin.board, chesswin.num)
+            _, x, y = alphabeta.get_best_pos(True, player['color'], competer, 0)
+            chesswin.set_cur(x, y)
+        elif key == 'A':
+            return computer_round(chesswin, scorewin, player, competer)
 
 
-def computer_round(chesswin, scorewin, player: dict, human_color: ChessColor):
+
+def computer_round(chesswin, scorewin, player: dict, competer: ChessColor):
     scorewin.change_player(player['name'])
     scorewin.refresh()
     alphabeta = AlphaBeta(chesswin.board, chesswin.num)
-    _, x, y = alphabeta.get_best_pos(True, player['color'], human_color, 0)
+    _, x, y = alphabeta.get_best_pos(True, player['color'], competer, 0)
     #scorewin.add_msg(str(t) + ", " + str(x) + ", " + str(y))
     chesswin.set_cur(x, y)
     try:
-        return chesswin.add_chessman(player['color'])
+        if chesswin.add_chessman(player['color']):
+            chesswin.set_board_blink(chesswin.board.get_continue(x, y, chesswin.num))
+            return True
+        else:
+            return False
     except ValueError:
         exit(chesswin, scorewin)
 
@@ -118,10 +154,11 @@ if __name__ == '__main__':
 
     curses.noecho()
 
+    startup(scr)
     ''' Options '''
     rows = menu_select(scr, "请选择棋盘规格",
-                        ["10 x 10", "12 x 12",
-                        "15 x 15"], [10, 12, 15], 10)
+                        ["10 x 10", "15 x 15",
+                        "18 x 18"], [10, 15, 18], 10)
 
     player_first = menu_select(scr, "请选择先手方",
                       ["玩家", "电脑"], [True, False], True)
@@ -143,9 +180,10 @@ if __name__ == '__main__':
     players = {"player" : {"name": "玩家", "color": ChessColor('#')},
               "computer": {"name": "电脑", "color": ChessColor('@')}}
 
-    scorewin.add_msg("使用方向键移动<Up, Down, Left, Right>", curses.A_ITALIC)
-    scorewin.add_msg("使用<Enter>下棋", curses.A_ITALIC)
-    scorewin.add_msg("<ctrl-c> 退出", curses.A_ITALIC)
+    scorewin.add_msg("<Up, Down, Left, Right>: 移动", curses.A_ITALIC)
+    scorewin.add_msg("<Enter>: 落子", curses.A_ITALIC)
+    scorewin.add_msg("<a>: 提示", curses.A_ITALIC)
+    scorewin.add_msg("<ctrl-c>: 退出", curses.A_ITALIC)
 
     ''' Draw chessboard'''
     chesswin.draw_board()
@@ -157,7 +195,8 @@ if __name__ == '__main__':
         scr.refresh()
 
         try:
-            if player_first and player_round(chesswin, scorewin, players['player']):
+            if player_first and player_round(chesswin, scorewin,
+                            players['player'], players['computer']['color']):
                 scorewin.add_msg("游戏结束,"
                                  + players['player']["name"] + "胜")
                 exit(chesswin, scorewin)

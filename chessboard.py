@@ -31,20 +31,20 @@ class ChessBoard(object):
     ''' Check how many chessmans are in the same color
         in the direction 
     '''
-    def check_dir(self, x: int, y: int, dir) -> int:
+    def get_dir(self, x: int, y: int, dir) -> set: 
         if not (1 <= x <= self.cols and 1 <= y <= self.rows):
             return 0
         if self.board[y - 1][x - 1] == None:
             return 0
         color = self.board[y-1][x-1].get_color()
-        cur_n = 0
+        ret = set() 
         xp, yp = x, y
         while (1 <= xp <= self.cols and 1 <= yp <= self.rows 
                 and self.board[yp-1][xp-1] != None
-                and self.board[yp-1][xp-1].get_color() == color):
-            cur_n += 1
+                and self.board[yp - 1][xp - 1].get_color() == color):
+            ret.add((xp, yp))
             xp, yp = dir(xp, yp)
-        return cur_n
+        return ret
 
     def get_corner(self, x: int, y: int, dir) -> (int, int):
         while 1 <= x <= self.cols and 1 <= y <= self.rows:
@@ -67,16 +67,43 @@ class ChessBoard(object):
         lower_left = lambda x, y: left(*down(x,y))
         upper_right = lambda x, y: right(*up(x, y))
         lower_right = lambda x, y: right(*down(x,y))
-        if (self.check_dir(x, y, upper_left) + self.check_dir(x, y, lower_right)
-                                >= n + 1
-            or self.check_dir(x, y, upper_right) + self.check_dir(x, y, lower_left)
-                                >= n + 1
-            or self.check_dir(x, y, up) + self.check_dir(x, y, down)
-                                >= n + 1
-            or self.check_dir(x, y, left) + self.check_dir(x, y, right)
-                                >= n + 1 ):
+        if (len(self.get_dir(x, y, upper_left)) + len(self.get_dir(x, y, lower_right)) >= n + 1
+            or len(self.get_dir(x, y, upper_right)) 
+                + len(self.get_dir(x, y, lower_left)) >= n + 1
+            or len(self.get_dir(x, y, up))
+                + len(self.get_dir(x, y, down)) >= n + 1
+            or len(self.get_dir(x, y, left)) 
+                + len(self.get_dir(x, y, right)) >= n + 1):
             return True
         return False
+
+    def get_continue(self, x: int, y: int, n: int) -> set:
+        if not (1 <= x <= self.cols and 1 <= y <= self.rows):
+            return False
+        if self.board[y - 1][x - 1] == None:
+            return False
+        up = lambda x, y: (x, y - 1)
+        down = lambda x, y: (x, y + 1)
+        left = lambda x, y: (x - 1, y)
+        right = lambda x, y: (x + 1, y)
+        upper_left = lambda x, y: left(*up(x, y))
+        lower_left = lambda x, y: left(*down(x,y))
+        upper_right = lambda x, y: right(*up(x, y))
+        lower_right = lambda x, y: right(*down(x,y))
+        if (len(self.get_dir(x, y, upper_left)
+            .union(self.get_dir(x, y, lower_right))) >= n):
+            return self.get_dir(x, y, upper_left).union(self.get_dir(x, y, lower_right))
+        if (len(self.get_dir(x, y, upper_right)
+            .union(self.get_dir(x, y, lower_left))) >= n):
+            return self.get_dir(x, y, upper_right).union(self.get_dir(x, y, lower_left))
+        if (len(self.get_dir(x, y, up)
+            .union(self.get_dir(x, y, down))) >= n):
+            return self.get_dir(x, y, up).union(self.get_dir(x, y, down))
+
+        if (len(self.get_dir(x, y, left)
+            .union(self.get_dir(x, y, right))) >= n):
+            return self.get_dir(x, y, left).union(self.get_dir(x, y, right))
+        return set()
 
     ''' Check whether the board is full '''
     def check_full(self) -> bool:
