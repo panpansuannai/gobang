@@ -229,7 +229,7 @@ class AlphaBeta(object):
             or s.find('@@_@*') != -1
             or s.find('@@@_*') != -1
             or s.find('_@@@*') != -1):
-            scores += 100000
+            scores += 60000
 
 
         elif (s.find('*##__') != -1
@@ -245,7 +245,7 @@ class AlphaBeta(object):
 
         elif (s.find('_@*@_') != -1
             or s.find('_@*@_') != -1):
-            scores += 50000
+            scores += 5000
 
         elif (s.find('*@@_') != -1
             or s.find('_*@@') != -1
@@ -254,6 +254,14 @@ class AlphaBeta(object):
             or s.find('_@@*') != -1
             or s.find('@@*_') != -1):
             scores += 1000
+
+        elif (s.find('@@_*_') != -1
+            or s.find('@_*@_') != -1
+            or s.find('_@_*@') != -1
+            or s.find('_@*_@') != -1
+            or s.find('@*_@_') != -1
+            or s.find('_*_@@') != -1):
+            scores += 600
 
         elif (s.find('*#___') != -1
             or s.find('#*___') != -1
@@ -278,6 +286,14 @@ class AlphaBeta(object):
             or s.find('_*__#') != -1
             or s.find('_#__*') != -1):
             scores += 50
+
+        elif (s.find('_*@') != -1
+                or s.find('@*_') != -1):
+            scores += 10
+
+        elif (s.find('_*_@') != -1
+                or s.find('@_*_') != -1):
+            scores += 5
 
         return scores
 

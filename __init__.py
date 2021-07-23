@@ -116,7 +116,8 @@ def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool
             try:
                 if chesswin.add_chessman(player['color']):
                     chesswin.set_board_blink(chesswin.board.get_continue(
-                                                chesswin.x, chesswin.y, chesswin.num))
+                                            *chesswin.winaddr2index(chesswin.y,
+                                            chesswin.x), chesswin.num))
                     return True
                 else:
                     return False
