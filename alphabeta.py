@@ -13,6 +13,7 @@ class AlphaBeta(object):
         self.pos_weight = [[min([i +1, j+1, board.get_cols() - i, board.get_rows() - j]) for i in range(board.get_cols())] for j in range(board.get_rows())]
 
 
+    ''' Return the best position for computer to drop chessman '''
     def get_best_pos(self, mini: bool, minicolor: ChessColor,
                 maxcolor: ChessColor, max_depth: int = 4,
                 a: int = NEG_INF, b: int = INF, depth: int = 0):
@@ -47,6 +48,10 @@ class AlphaBeta(object):
                             x, y = i, j
         return (v, x, y)
 
+    ''' [unused code]
+    the search code now isn't ready to work, we just set the depth to 0
+    so it will call calc_board_scores directly to get the scores
+    '''
     def cut_branch(self, x:int, y:int, mini: bool, minicolor: ChessColor,
                 maxcolor: ChessColor, max_depth:int = 4, 
                 a:int = NEG_INF, b:int = INF, depth:int = 0):
@@ -111,6 +116,7 @@ class AlphaBeta(object):
                         assert self.board.get_chessman(i, j) == None
             return v
         
+    ''' Return the scores for the position (x, y) '''
     def calc_board_scores(self, x: int, y: int, mini: bool,
                             minicolor: ChessColor,
                             maxcolor: ChessColor) -> int:
@@ -156,6 +162,7 @@ class AlphaBeta(object):
             scores += self.__calc_scores(s) + self.pos_weight[y-1][x-1]
         return -scores if mini else scores
 
+    ''' Return the scores of some chessmans pattern '''
     def __calc_scores(self, s: str) -> int:
         ''' # : me, @: it , *: now'''
         scores = 0
