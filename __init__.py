@@ -37,6 +37,8 @@ def shortcuts(key: str) -> str:
         key = 'KEY_RIGHT'
     elif key == 'h':
         key = 'KEY_LEFT'
+    elif key == ' ':
+        key = '\n'
     return key
 
 def menu_select(scr, promt: str, strs:list, options: list, default):

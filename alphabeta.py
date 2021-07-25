@@ -1,7 +1,6 @@
 from chessboard import *
 from chessman import *
 import sys
-import tabulate
 
 INF = sys.maxsize
 NEG_INF = - INF
@@ -30,8 +29,6 @@ class AlphaBeta(object):
                     self.board.remove_chessman(i, j)
                     assert self.board.get_chessman(i, j) == None
 
-        #print(tabulate.tabulate(board))
-
         if mini:
             v = NEG_INF
         else:
@@ -55,9 +52,7 @@ class AlphaBeta(object):
                 a:int = NEG_INF, b:int = INF, depth:int = 0):
 
         if depth >= max_depth:
-            #print("x: {}, y:{}, {}".format(x, y, minicolor.color() if mini else maxcolor.color()))
             scores = self.calc_board_scores(x, y, mini, minicolor, maxcolor)
-            #print("scores: {}".format(scores))
             return scores 
 
         if mini:
@@ -145,7 +140,6 @@ class AlphaBeta(object):
                     upper_right)]:
             start_x, start_y, end_x, end_y, direction = i
             start_x, start_y = direction(start_x, start_y)
-            #print("(" + str(start_x) + ", " + str(start_y) + ") -> (" + str(end_x) + ", " + str(end_y) + ")")
             s = '|'
             while start_x != end_x or start_y != end_y:
                 if self.board.get_chessman(start_x, start_y) == chessman:
@@ -159,7 +153,6 @@ class AlphaBeta(object):
                     s += '@'
                 start_x, start_y = direction(start_x, start_y)
             s += '|'
-            #print(s)
             scores += self.__calc_scores(s) + self.pos_weight[y-1][x-1]
         return -scores if mini else scores
 
