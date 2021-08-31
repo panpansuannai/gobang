@@ -2,6 +2,8 @@
 dependencies: 
 
 - curses
+
+
   Tips: 
   由于windows 对curses库支持不足，在windows平台上暂时难以运行。
 
