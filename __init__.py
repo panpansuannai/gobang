@@ -27,6 +27,31 @@ def startup(scr):
             curses.endwin()
             sys.exit(0)
 
+def split_window(scr) -> tuple[ChessBoardWindow, ScoreWindow]:
+    scrmaxy, scrmaxx = scr.getmaxyx()
+    chessmaxy, chessmaxx = rows * 2 + 2, rows * 4 + 4
+    winmarginx = (scrmaxx - 2 * chessmaxx) // 3
+    winmarginy = (scrmaxy -  chessmaxy) // 2 
+    try:
+        chessboard = scr.derwin(chessmaxy, chessmaxx, 1 + winmarginy, 1 + winmarginx)
+    except:
+        import os
+        curses.endwin()
+        print("当前终端columns = ", scrmaxx, ", rows = ", scrmaxy)
+        print("窗口加载失败，请尝试全屏运行")
+        os._exit(0)
+    chessboard.keypad(True)
+    chessboard.clear()
+    chessboard.border()
+    chesswin = ChessBoardWindow(chessboard, rows, num)
+
+    chessbegy, chessbegx = chessboard.getbegyx()
+    scoreboard = scr.derwin(chessmaxy, chessmaxx, chessbegy, chessbegx + chessmaxx + winmarginx)
+    scoreboard.keypad(True)
+    scoreboard.border()
+    scorewin = ScoreWindow(scoreboard)
+    return (chesswin, scorewin)
+
 def shortcuts(key: str) -> str:
     ''' short cut '''
     if key == 'j':
@@ -98,7 +123,6 @@ def exit(chesswin, scorewin):
 
 def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool:
     chesswin.set_current_color(player['color'])
-    chesswin.move('')
     scorewin.change_player(player['name'])
     scorewin.refresh()
     while True:
@@ -113,38 +137,36 @@ def player_round(chesswin, scorewin, player: dict, competer: ChessColor) -> bool
             or key == 'KEY_RIGHT'
             or key == 'KEY_UP'
             or key == 'KEY_DOWN') :
-            chesswin.move(key)
+            chesswin.move_dir(key)
         elif key == '\n':
             try:
                 if chesswin.add_chessman(player['color']):
-                    chesswin.set_board_blink(chesswin.board.get_continue(
+                    chesswin.set_board_blink(chesswin.chessboard.get_continue(
                                             *chesswin.winaddr2index(chesswin.y,
-                                            chesswin.x), chesswin.num))
+                                            chesswin.x), chesswin.num_to_win))
                     return True
                 else:
                     return False
             except ValueError:
-                chesswin.move('')
                 continue
         elif key == 'a':
-            alphabeta = AlphaBeta(chesswin.board, chesswin.num)
+            alphabeta = AlphaBeta(chesswin.chessboard, chesswin.num_to_win)
             _, x, y = alphabeta.get_best_pos(True, player['color'], competer, 0)
             chesswin.set_cur(x, y)
         elif key == 'A':
             return computer_round(chesswin, scorewin, player, competer)
 
 
-
 def computer_round(chesswin, scorewin, player: dict, competer: ChessColor):
     scorewin.change_player(player['name'])
     scorewin.refresh()
-    alphabeta = AlphaBeta(chesswin.board, chesswin.num)
+    alphabeta = AlphaBeta(chesswin.chessboard, chesswin.num_to_win)
     _, x, y = alphabeta.get_best_pos(True, player['color'], competer, 0)
     #scorewin.add_msg(str(t) + ", " + str(x) + ", " + str(y))
     chesswin.set_cur(x, y)
     try:
         if chesswin.add_chessman(player['color']):
-            chesswin.set_board_blink(chesswin.board.get_continue(x, y, chesswin.num))
+            chesswin.set_board_blink(chesswin.chessboard.get_continue(x, y, chesswin.num_to_win))
             return True
         else:
             return False
@@ -153,45 +175,47 @@ def computer_round(chesswin, scorewin, player: dict, competer: ChessColor):
 
 if __name__ == '__main__':
     scr = curses.initscr()
+    scrmaxy, scrmaxx = scr.getmaxyx()
     scr.keypad(True)
     scr.border()
 
     curses.noecho()
 
     startup(scr)
+
     ''' Options '''
+
+    # 其他棋盘规格没有做调整，不太美观
+    # 只使用15 X 15的棋盘
+    '''
     rows = menu_select(scr, "请选择棋盘规格",
                         ["10 x 10", "15 x 15",
                         "18 x 18"], [10, 15, 18], 10)
+    '''
+    rows = 15                  
 
     player_first = menu_select(scr, "请选择先手方",
                       ["玩家", "电脑"], [True, False], True)
+    
+    chessman_style = [["@", "#"], ["^", "*"], ["○", "●"], ["×", "Ø"]]
+    chessman_style = menu_select(scr, "请选择棋子样式",
+            list(map(lambda x: x[0] + ' - ' + x[1], chessman_style)),
+            chessman_style, chessman_style[0])
+    scr.clear()
+    scr.border()
 
     num = 5
+    chesswin, scorewin = split_window(scr)
 
-    max_y, max_x = scr.getmaxyx()
-    chessboard = scr.derwin(max_y - 2, max_x // 2, 1, 1)
-    chessboard.keypad(True)
-    chessboard.clear()
-    chessboard.border()
-    chesswin = ChessBoardWindow(chessboard, rows, num)
-
-    scoreboard = scr.derwin(max_y - 2, max_x // 2 - 1, 1, 1 + max_x // 2)
-    scoreboard.keypad(True)
-    scoreboard.border()
-    scorewin = ScoreWindow(scoreboard)
-
-    players = {"player" : {"name": "玩家", "color": ChessColor('○')},
-              "computer": {"name": "电脑", "color": ChessColor('●')}}
+    players = {"player" : {"name": "玩家", "color": ChessColor(chessman_style[0])},
+              "computer": {"name": "电脑", "color": ChessColor(chessman_style[1])}}
 
     scorewin.add_msg("<Up, Down, Left, Right>: 移动", curses.A_ITALIC)
     scorewin.add_msg("<Enter>: 落子", curses.A_ITALIC)
     scorewin.add_msg("<a>: 提示", curses.A_ITALIC)
     scorewin.add_msg("<ctrl-c>: 退出", curses.A_ITALIC)
 
-    ''' Draw chessboard'''
-    chesswin.draw_board()
-    chesswin.reset_cur()
+    # set cursor not visible
     curses.curs_set(0)
 
     while True:

@@ -164,7 +164,7 @@ class AlphaBeta(object):
 
     ''' Return the scores of some chessmans pattern '''
     def __calc_scores(self, s: str) -> int:
-        ''' # : me, @: it , *: now'''
+        ''' # : me, @: it , *: now, _: empty'''
         scores = 0
         if (s.find('*####') != -1
            or s.find('#*###') != -1
@@ -173,18 +173,23 @@ class AlphaBeta(object):
            or s.find('####*') != -1):
             scores += 90000000
 
-        elif (s.find('*@@@@') != -1
-            or s.find('@*@@@') != -1
-            or s.find('@@*@@') != -1
-            or s.find('@@@*@') != -1
-            or s.find('@@@@*') != -1):
-            scores += 5000000
-
         elif (s.find('_*###_') != -1
             or s.find('_#*##_') != -1
             or s.find('_##*#_') != -1
             or s.find('_###*_') != -1):
-            scores += 6000000
+            scores += 90000000
+
+        elif (s.find('*###_') != -1
+            or s.find('_###*') != -1):
+            scores += 70000000
+
+        elif (s.find('*@@@@#') != -1
+            or s.find('@*@@@') != -1
+            or s.find('@@*@@') != -1
+            or s.find('@@@*@') != -1
+            or s.find('#@@@@*') != -1):
+            scores += 5000000
+
 
         elif ( s.find('*_###') != -1
             or s.find('*#_##') != -1

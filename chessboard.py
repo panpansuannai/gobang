@@ -1,3 +1,4 @@
+from typing import Optional
 from chessman import ChessMan
 
 """ 1-index chess board """
@@ -9,7 +10,7 @@ class ChessBoard(object):
     def __init__(self, cols: int, rows: int):
         self.cols = cols
         self.rows = rows
-        self.board = [[None for i in range(cols)] for j in range(rows)]
+        self.board = [[None for _ in range(cols)] for _ in range(rows)]
 
     ''' Add a chessman at the position (x, y) '''
     def add_chessman(self, x: int, y: int, chessman: ChessMan) -> bool:
@@ -19,7 +20,7 @@ class ChessBoard(object):
         return False
 
     ''' Get the chessman at the position (x, y) '''
-    def get_chessman(self, x: int, y: int):
+    def get_chessman(self, x: int, y: int) -> object:
         if 1 <= x <= self.cols and 1 <= y <= self.rows:
             return self.board[y-1][x-1]
         return None
@@ -31,11 +32,11 @@ class ChessBoard(object):
     ''' Check how many chessmans are in the same color
         in the direction 
     '''
-    def get_dir(self, x: int, y: int, dir) -> set: 
+    def get_dir(self, x: int, y: int, dir) -> set[tuple[int, int]]: 
         if not (1 <= x <= self.cols and 1 <= y <= self.rows):
-            return 0
+            return set()
         if self.board[y - 1][x - 1] == None:
-            return 0
+            return set()
         color = self.board[y-1][x-1].get_color()
         ret = set() 
         xp, yp = x, y
@@ -46,7 +47,7 @@ class ChessBoard(object):
             xp, yp = dir(xp, yp)
         return ret
 
-    def get_corner(self, x: int, y: int, dir) -> (int, int):
+    def get_corner(self, x: int, y: int, dir) -> tuple[int, int]:
         while 1 <= x <= self.cols and 1 <= y <= self.rows:
             x, y = dir(x, y)
         return (x, y)

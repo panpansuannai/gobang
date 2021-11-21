@@ -5,18 +5,29 @@ import curses
 ''' Represent a window that contains a chessboard
 '''
 class ChessBoardWindow(object):
-    def __init__(self, window, rows: int, num: int):
+    def __init__(self, window, rows: int, num_to_win: int):
         self.__window = window
-        self.board = ChessBoard(rows, rows)
-        self.rows = rows
-        self.num = num
-        self.null_char = '⋅'
+        self.rows = rows  # rows is equal to column
+        chess_max_y, chess_max_x = self.__window.getmaxyx()
+        self.col_step = chess_max_x // (self.rows + 1)
+        self.row_step = chess_max_y // (self.rows + 1)
+        self.chessboard = ChessBoard(rows, rows)
+        self._num_to_win = num_to_win
+        #self.null_char = '⋅'
+        self.null_char = '.'
         self.cur_color = ChessColor(' ')
+        self.draw_board()
+        self.reset_cur()
+    @property
+    def num_to_win(self):
+        return self._num_to_win
+
 
     ''' Move the cursor to the direction
         @param direction must be 'KEY_UP' or 'KEY_DOWN' or 'KEY_LEFT' or 'KEY_RIGHT'
     '''
-    def move(self, direction: str):
+    def move_dir(self, direction: str):
+        old_y, old_x = self.y, self.x
         if direction == 'KEY_UP' and self.y > self.start_y:
             self.y, self.x = self.y - self.row_step, self.x
         elif direction == 'KEY_DOWN' and self.y < self.start_y + (self.rows - 1)*self.row_step:
@@ -25,75 +36,75 @@ class ChessBoardWindow(object):
             self.y, self.x = self.y, self.x - self.col_step
         elif direction == 'KEY_RIGHT' and self.x < self.start_x + (self.rows - 1) * self.col_step:
             self.y, self.x = self.y, self.x + self.col_step
-        self.draw_board()
-        if self.board.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
+        self.draw_point(*self.winaddr2index(old_y, old_x))
+        if self.chessboard.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
             self.__window.addch(self.y, self.x,
                         self.cur_color.color(), curses.A_BLINK|curses.A_BOLD)
         else:
             self.__window.addch(self.y, self.x,
-                self.board.get_chessman(
+                self.chessboard.get_chessman(
                     *self.winaddr2index(self.y, self.x)).get_color().color(),
                     curses.A_BOLD|curses.A_UNDERLINE)
         self.__window.move(self.y, self.x)
+        self.__window.refresh()
 
     def set_cur(self, x: int, y: int):
         self.y, self.x = self.index2windaddr(x, y)
         self.__window.move(self.y, self.x)
-        self.move('')
+
+
+    def draw_point(self, i:int, j:int):
+        if self.chessboard.get_chessman(i, j) == None:
+            self.__window.addch(*(self.index2windaddr(i, j)), self.null_char)
+        else:
+            color = self.chessboard.get_chessman(i, j).get_color()
+            self.__window.addch(*(self.index2windaddr(i, j)),
+                        color.color())
+        self.__window.refresh()
 
     ''' Draw the chessboard to the console '''
     def draw_board(self):
-        chess_max_y, chess_max_x = self.__window.getmaxyx()
-
-        self.col_step = chess_max_x // (self.rows + 1)
-        self.row_step = chess_max_y // (self.rows + 1)
 
         for j in range(1, self.rows + 1):
             for i in range(1, self.rows + 1):
-                if self.board.get_chessman(i, j) == None:
-                    self.__window.addch(*(self.index2windaddr(i, j)), self.null_char)
-                else:
-                    color = self.board.get_chessman(i, j).get_color()
-                    self.__window.addch(*(self.index2windaddr(i, j)),
-                                        color.color())
+                self.draw_point(i, j)
 
     ''' Reset the cursor to the begining '''
     def reset_cur(self):
         self.start_y, self.start_x = self.index2windaddr(1,1) 
         self.__window.move(self.start_y, self.start_x)
         self.y, self.x = self.start_y, self.start_x
-        self.move('')
 
     ''' Transform the windows position to 
         chessboard index
     '''
-    def winaddr2index(self, y: int, x: int) -> (int, int):
+    def winaddr2index(self, y: int, x: int) -> tuple[int, int]:
         return (x // self.col_step , y // self.row_step )
 
     ''' Transform the chessboard index to 
         the window position
     '''
-    def index2windaddr(self, x: int, y: int) -> (int, int):
+    def index2windaddr(self, x: int, y: int) -> tuple[int, int]:
         return (self.row_step*y, self.col_step*x)
 
     ''' Add a chessman at the current cursor,
-        if game finish return True
+        if game finished return True
         else return False
     '''
     def add_chessman(self, color: ChessColor) -> bool:
-        if self.board.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
-            self.board.add_chessman(
+        if self.chessboard.get_chessman(*self.winaddr2index(self.y, self.x)) == None:
+            self.chessboard.add_chessman(
                                     *self.winaddr2index(self.y, self.x),
                                     ChessMan(color))
-            self.draw_board()
+            self.draw_point(*self.winaddr2index(self.y, self.x))
             self.__window.refresh()
-            self.move('')
-            if self.board.check_n_chessman(*self.winaddr2index(self.y, self.x), self.num):
+            if self.chessboard.check_n_chessman(*self.winaddr2index(self.y, self.x), self.num_to_win):
                 return True
-            elif self.board.check_full():
+            elif self.chessboard.check_full():
                 raise ChessBoard.FullException
         else:
             raise ValueError
+        return False
 
     ''' Set the current cursor to the target color '''
     def set_current_color(self, color: ChessColor):
