@@ -1,5 +1,5 @@
 # 一个Python 人机对战五子棋程序
-dependencies: 
+Dependencies: 
 
 - curses
 
