@@ -49,8 +49,10 @@ class ChessBoardWindow(object):
         self.__window.refresh()
 
     def set_cur(self, x: int, y: int):
+        self.draw_point(*self.winaddr2index(self.y, self.x))
         self.y, self.x = self.index2windaddr(x, y)
         self.__window.move(self.y, self.x)
+        self.move_dir('')
 
 
     def draw_point(self, i:int, j:int):

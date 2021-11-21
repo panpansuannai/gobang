@@ -1,6 +1,5 @@
 import curses
 import sys
-import time
 import curses.textpad
 from chessboard import *
 from chessman import *
